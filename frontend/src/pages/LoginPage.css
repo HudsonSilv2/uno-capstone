@@ -1,0 +1,30 @@
+.login__intro {
+  margin-bottom: var(--sp-5);
+}
+
+.login__tabs {
+  display: flex;
+  gap: var(--sp-1);
+  padding: 4px;
+  margin-bottom: var(--sp-4);
+  background: var(--ink-850);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.login__tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login__tab.is-active {
+  background: var(--ink-700);
+  color: var(--text);
+}

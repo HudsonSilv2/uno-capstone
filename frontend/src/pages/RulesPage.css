@@ -1,0 +1,44 @@
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.rules__steps {
+  margin: 0;
+  padding-left: 1.3em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  color: var(--text-dim);
+  max-width: 74ch;
+}
+
+.rules__steps li::marker {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.rules__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--sp-4);
+}
+
+.rules__card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.rules__card h3 {
+  margin-bottom: 4px;
+}
+
+.rules__card p {
+  font-size: 0.85rem;
+}

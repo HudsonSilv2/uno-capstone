@@ -1,0 +1,213 @@
+/*
+  UNO card: white frame, tilted inner oval and the value repeated in the
+  corners, like the physical card. No glow and no pulsing animation; the only
+  emphasis is the playable card lifting under the cursor.
+*/
+
+.uno-card {
+  position: relative;
+  display: inline-flex;
+  padding: 5%;
+  background: #f4f1ea;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 14px rgba(0, 0, 0, 0.28);
+  color: #fff;
+  user-select: none;
+  flex: none;
+}
+
+.uno-card--sm {
+  width: 46px;
+  height: 69px;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+.uno-card--md {
+  width: 76px;
+  height: 114px;
+  border-radius: 9px;
+  font-size: 26px;
+}
+
+.uno-card--lg {
+  width: 104px;
+  height: 156px;
+  border-radius: 12px;
+  font-size: 36px;
+}
+
+.uno-card__face {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.uno-card--red .uno-card__face {
+  background: var(--card-red);
+}
+
+.uno-card--blue .uno-card__face {
+  background: var(--card-blue);
+}
+
+.uno-card--yellow .uno-card__face {
+  background: var(--card-yellow);
+}
+
+.uno-card--green .uno-card__face {
+  background: var(--card-green);
+}
+
+.uno-card--wild .uno-card__face {
+  background: var(--card-wild);
+}
+
+/* Tilted center oval */
+.uno-card__center {
+  position: absolute;
+  inset: 8%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f1ea;
+  border-radius: 50% / 42%;
+  transform: rotate(-27deg);
+  color: inherit;
+}
+
+.uno-card__center > * {
+  transform: rotate(27deg);
+}
+
+.uno-card--red .uno-card__center {
+  color: var(--card-red-deep);
+}
+
+.uno-card--blue .uno-card__center {
+  color: var(--card-blue-deep);
+}
+
+.uno-card--yellow .uno-card__center {
+  color: var(--card-yellow-deep);
+}
+
+.uno-card--green .uno-card__center {
+  color: var(--card-green-deep);
+}
+
+.uno-card--wild .uno-card__center {
+  color: var(--card-wild-deep);
+}
+
+.uno-card__corner {
+  position: absolute;
+  font-size: 0.36em;
+  line-height: 1;
+  color: #fff;
+  z-index: 1;
+}
+
+.uno-card__corner--tl {
+  top: 5%;
+  left: 7%;
+}
+
+.uno-card__corner--br {
+  bottom: 5%;
+  right: 7%;
+  transform: rotate(180deg);
+}
+
+.uno-card__text {
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.03em;
+}
+
+.uno-card__center .uno-card__text {
+  font-size: 1em;
+}
+
+.uno-card__glyph {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+.uno-card__center .uno-card__glyph {
+  width: 0.92em;
+  height: 0.92em;
+}
+
+.uno-card__stack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uno-card__stack-text {
+  position: absolute;
+  font-size: 0.44em;
+  font-weight: 900;
+  font-style: italic;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Card back */
+.uno-card--back .uno-card__face {
+  background: var(--card-wild);
+}
+
+.uno-card__back-oval {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 84%;
+  height: 62%;
+  background: var(--card-red);
+  border-radius: 50% / 46%;
+  transform: rotate(-27deg);
+  font-size: 0.4em;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  color: #f4f1ea;
+}
+
+/* States */
+button.uno-card {
+  padding: 5%;
+  cursor: default;
+  font: inherit;
+}
+
+.uno-card.is-interactive {
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.uno-card.is-interactive:hover,
+.uno-card.is-interactive:focus-visible {
+  transform: translateY(-10px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 14px 24px rgba(0, 0, 0, 0.36);
+}
+
+.uno-card.is-selected {
+  transform: translateY(-14px);
+  box-shadow: 0 0 0 2px var(--accent), 0 14px 24px rgba(0, 0, 0, 0.4);
+}
+
+.uno-card.is-disabled {
+  opacity: 0.52;
+  filter: saturate(0.78);
+  cursor: not-allowed;
+}

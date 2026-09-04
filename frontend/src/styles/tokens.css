@@ -1,0 +1,69 @@
+/*
+  Client design tokens.
+
+  The interface is deliberately dark and neutral: the four UNO colors show up
+  only on the cards and in the wild-card color picker, never in the application
+  chrome. That keeps the table readable and leaves the card as the loudest
+  element on screen.
+*/
+
+:root {
+  /* Surfaces */
+  --ink-900: #101215;
+  --ink-850: #14171b;
+  --ink-800: #191d22;
+  --ink-700: #20252b;
+  --ink-600: #2b3138;
+
+  --line: #2a3037;
+  --line-strong: #3a424b;
+
+  /* Text */
+  --text: #e9e6df;
+  --text-dim: #9ba3ad;
+  --text-faint: #6d757f;
+
+  /* The single interface accent */
+  --accent: #c8963e;
+  --accent-soft: rgba(200, 150, 62, 0.14);
+  --accent-line: rgba(200, 150, 62, 0.45);
+
+  /* States */
+  --danger: #c9584f;
+  --danger-soft: rgba(201, 88, 79, 0.13);
+  --success: #5f9e6a;
+  --success-soft: rgba(95, 158, 106, 0.13);
+
+  /* Official card colors */
+  --card-red: #d0342c;
+  --card-red-deep: #a3241e;
+  --card-blue: #1f6fb8;
+  --card-blue-deep: #17548b;
+  --card-yellow: #e3ac1a;
+  --card-yellow-deep: #b98708;
+  --card-green: #2e8b52;
+  --card-green-deep: #1f6a3d;
+  --card-wild: #23262b;
+  --card-wild-deep: #15171a;
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* Radii */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+
+  /* Typography */
+  --font: 'Archivo', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --tracking-caps: 0.09em;
+
+  color-scheme: dark;
+}

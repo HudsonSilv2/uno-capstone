@@ -1,0 +1,63 @@
+.color-choice {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-3);
+}
+
+.color-choice__option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--ink-700);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+.color-choice__option:hover:not(:disabled) {
+  background: var(--ink-600);
+}
+
+.color-choice__option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.color-choice__swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-sm);
+  flex: none;
+}
+
+.color-choice__option--red {
+  border-color: rgba(208, 52, 44, 0.5);
+}
+.color-choice__option--red .color-choice__swatch {
+  background: var(--card-red);
+}
+
+.color-choice__option--blue {
+  border-color: rgba(31, 111, 184, 0.5);
+}
+.color-choice__option--blue .color-choice__swatch {
+  background: var(--card-blue);
+}
+
+.color-choice__option--yellow {
+  border-color: rgba(227, 172, 26, 0.5);
+}
+.color-choice__option--yellow .color-choice__swatch {
+  background: var(--card-yellow);
+}
+
+.color-choice__option--green {
+  border-color: rgba(46, 139, 82, 0.5);
+}
+.color-choice__option--green .color-choice__swatch {
+  background: var(--card-green);
+}

@@ -1,0 +1,1083 @@
+{
+	"info": {
+		"_postman_id": "f5e9ad71-bc01-4475-b6d3-24151a66ffbe",
+		"name": "Uno Capstone API",
+		"description": "Postman collection for testing the Uno Capstone game API endpoints. Includes automatic JWT token storage on login.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:{{port}}/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "{{port}}",
+					"path": [
+						"health"
+					]
+				},
+				"description": "Checks if the API server is healthy and running. Note: this route lives outside the /api prefix, so it can't use {{baseUrl}} like the other requests."
+			},
+			"response": []
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Jogador Teste\",\n  \"email\": \"jogador.teste@example.com\",\n  \"password\": \"senhaSegura123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Registers a new player with encrypted password."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.collectionVariables.set(\"token\", jsonData.token);",
+									"    console.log(\"JWT token saved to collection variable 'token'\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"jogador.teste@example.com\",\n  \"password\": \"senhaSegura123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticates a player and returns a JWT token."
+					},
+					"response": []
+				},
+				{
+					"name": "Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						},
+						"description": "Gets the profile information of the authenticated player."
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Blacklists the current active token to log out the player."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Players",
+			"item": [
+				{
+					"name": "Create Player (Direct)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Jogador Avulso\",\n  \"email\": \"jogador.avulso@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/players",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"players"
+							]
+						},
+						"description": "Creates a player entry directly without creating a password/auth details."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Player By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/players/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"players",
+								"1"
+							]
+						},
+						"description": "Retrieves details of a player by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Player",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Jogador Avulso Atualizado\",\n  \"email\": \"jogador.avulso.atualizado@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/players/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"players",
+								"1"
+							]
+						},
+						"description": "Updates details of a player by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Player",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/players/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"players",
+								"1"
+							]
+						},
+						"description": "Deletes a player by ID."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Games",
+			"item": [
+				{
+					"name": "Create Game Lobby",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Partida de Uno Especial\",\n  \"status\": \"waiting\",\n  \"maxPlayers\": 4\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/games",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games"
+							]
+						},
+						"description": "Creates a new game lobby."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Games",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games"
+							]
+						},
+						"description": "Lists all game lobbies in the database."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Game By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1"
+							]
+						},
+						"description": "Gets detailed status of a specific game lobby by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Game Lobby",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Partida de Uno Modificada\",\n  \"status\": \"started\",\n  \"maxPlayers\": 6\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/games/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1"
+							]
+						},
+						"description": "Updates game settings and details by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Game Lobby",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1"
+							]
+						},
+						"description": "Deletes a game lobby by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Join Game Lobby",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/join",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"join"
+							]
+						},
+						"description": "Allows the currently authenticated player to join a game lobby."
+					},
+					"response": []
+				},
+				{
+					"name": "Start Game",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/start",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"start"
+							]
+						},
+						"description": "Starts the game: generates and shuffles the 108-card UNO deck, deals 7 cards to each player, and sets the game status to in_progress."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Players",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/players",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"players"
+							]
+						},
+						"description": "Lists all players registered to a specific game."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Game State",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/state",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"state"
+							]
+						},
+						"description": "Returns the complete game state for the authenticated player (hand, current turn player, direction, top discard, and player card counts)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Game Turn",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/turn",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"turn"
+							]
+						},
+						"description": "Gets the current turn player and game direction for a specific game."
+					},
+					"response": []
+				},
+				{
+					"name": "Advance Game Turn",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cardValue\": \"Skip\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/games/1/turn/next",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"turn",
+								"next"
+							]
+						},
+						"description": "Advances the turn to the next player, applying optional special card effects (Reverse, Skip, Draw Two, Wild Draw Four)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Discard Top",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/discard",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"discard"
+							]
+						},
+						"description": "Returns the id, color and value of the card currently on top of the discard pile."
+					},
+					"response": []
+				},
+				{
+					"name": "Play Card",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cardId\": 1,\n  \"chosenColor\": \"red\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/games/1/play",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"play"
+							]
+						},
+						"description": "Plays a card from the authenticated player's hand. Validates that it is their turn, that the card is in their hand, and that it matches the current discard color or value. `chosenColor` is required only when playing a wild card."
+					},
+					"response": []
+				},
+				{
+					"name": "Draw Card",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/draw",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"draw"
+							]
+						},
+						"description": "Draws one card from the deck into the authenticated player's hand. Only allowed on their turn. The turn passes automatically if the drawn card cannot be played."
+					},
+					"response": []
+				},
+				{
+					"name": "Call UNO",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/uno",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"uno"
+							]
+						},
+						"description": "Signals UNO for the authenticated player. Accepted only while the game is in progress and the player holds exactly one card. The flag is visible to the other players through the game state (players[].saidUno) and is cleared automatically whenever the hand grows again."
+					},
+					"response": []
+				},
+				{
+					"name": "Leave Game",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/leave",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"leave"
+							]
+						},
+						"description": "Removes the authenticated player from the game. If they were the current player, the turn passes to the next one in line."
+					},
+					"response": []
+				},
+				{
+					"name": "End Game",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/end",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"end"
+							]
+						},
+						"description": "Ends an in-progress game, scores every player by the cards left in their hand, persists the scores, and declares the lowest score the winner."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cards",
+			"item": [
+				{
+					"name": "Create Card",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"color\": \"red\",\n  \"value\": \"7\",\n  \"gameId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cards",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cards"
+							]
+						},
+						"description": "Adds a new card to a game."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Card By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cards/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cards",
+								"1"
+							]
+						},
+						"description": "Gets details of a card by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Card",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"color\": \"blue\",\n  \"value\": \"Reverse\",\n  \"gameId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cards/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cards",
+								"1"
+							]
+						},
+						"description": "Updates a card by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Card",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cards/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cards",
+								"1"
+							]
+						},
+						"description": "Deletes a card by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Cards By Game ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cards/game/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cards",
+								"game",
+								"1"
+							]
+						},
+						"description": "Lists all cards belonging to a specific game."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Scores",
+			"item": [
+				{
+					"name": "Create Score",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"playerId\": 1,\n  \"gameId\": 1,\n  \"score\": 100\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/scores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scores"
+							]
+						},
+						"description": "Submits a new score for a player in a game."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Score By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/scores/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scores",
+								"1"
+							]
+						},
+						"description": "Gets details of a score record by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Score",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"playerId\": 1,\n  \"gameId\": 1,\n  \"score\": 150\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/scores/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scores",
+								"1"
+							]
+						},
+						"description": "Updates a score record by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Score",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/scores/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scores",
+								"1"
+							]
+						},
+						"description": "Deletes a score record by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Scores By Game",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/scores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"scores"
+							]
+						},
+						"description": "Returns the current score of every player in a game, sorted from lowest to highest."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Statistics",
+			"item": [
+				{
+					"name": "Get Request Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stats/requests",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stats",
+								"requests"
+							]
+						},
+						"description": "Returns total request count and breakdown by endpoint and method."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Response Time Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stats/response-times",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stats",
+								"response-times"
+							]
+						},
+						"description": "Returns average, minimum, and maximum response times for each endpoint."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Status Code Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stats/status-codes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stats",
+								"status-codes"
+							]
+						},
+						"description": "Returns count summary of HTTP status codes returned by the API."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Popular Endpoint Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stats/popular-endpoints",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stats",
+								"popular-endpoints"
+							]
+						},
+						"description": "Returns the most frequently accessed endpoint along with request count."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:{{port}}/api",
+			"type": "string"
+		},
+		{
+			"key": "port",
+			"value": "3000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

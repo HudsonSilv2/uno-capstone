@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="7" fill="#f4f1ea" />
+  <rect x="3" y="3" width="26" height="26" rx="5" fill="#d0342c" />
+  <ellipse cx="16" cy="16" rx="11" ry="7" fill="#f4f1ea" transform="rotate(-27 16 16)" />
+  <text
+    x="16"
+    y="21"
+    text-anchor="middle"
+    font-family="Archivo, Segoe UI, system-ui, sans-serif"
+    font-size="13"
+    font-weight="900"
+    font-style="italic"
+    fill="#a3241e"
+  >U</text>
+</svg>
