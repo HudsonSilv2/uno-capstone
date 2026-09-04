@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { gamesApi } from '../services/api';
 import { usePolling } from '../hooks/usePolling';
 import { useAuth } from '../hooks/useAuth';
+import { socket } from '../services/socket';
 import { MIN_PLAYERS_TO_START, STATUS_LABELS } from '../domain/cards';
 import type { Game, GamePlayer } from '../types/api';
 import './WaitingRoomPage.css';
@@ -54,6 +55,30 @@ export function WaitingRoomPage() {
   const isMember = players.some((entry) => entry.id === player?.id);
   const isFull = game !== null && players.length >= game.maxPlayers;
   const canStart = isHost && players.length >= MIN_PLAYERS_TO_START;
+
+  useEffect(() => {
+    if (!player || !isMember || Number.isNaN(gameId)) {
+      return;
+    }
+
+    socket.connect();
+    socket.emit('game:join', { gameId });
+
+    const refreshRoom = ({ gameId: updatedGameId }: { gameId: number }) => {
+      if (updatedGameId === gameId) {
+        void refresh();
+      }
+    };
+
+    socket.on('connect', () => socket.emit('game:join', { gameId }));
+    socket.on('game:updated', refreshRoom);
+
+    return () => {
+      socket.off('connect');
+      socket.off('game:updated', refreshRoom);
+      socket.disconnect();
+    };
+  }, [gameId, isMember, player, refresh]);
 
   /* Once the host starts, everyone in the room is sent to the table. */
   useEffect(() => {
@@ -194,7 +219,10 @@ export function WaitingRoomPage() {
               className="btn"
               disabled={isBusy}
               onClick={() =>
-                runAction(() => gamesApi.leave(gameId), () => navigate('/partidas'))
+                runAction(
+                  () => gamesApi.leave(gameId),
+                  () => navigate('/partidas')
+                )
               }
             >
               Sair da sala
@@ -206,7 +234,10 @@ export function WaitingRoomPage() {
                 className="btn btn--danger"
                 disabled={isBusy}
                 onClick={() =>
-                  runAction(() => gamesApi.remove(gameId), () => navigate('/partidas'))
+                  runAction(
+                    () => gamesApi.remove(gameId),
+                    () => navigate('/partidas')
+                  )
                 }
               >
                 Remover partida

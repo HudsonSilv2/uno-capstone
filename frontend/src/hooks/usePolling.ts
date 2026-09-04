@@ -5,6 +5,7 @@ interface PollingResult<T> {
   error: string | null;
   isLoading: boolean;
   refresh: () => Promise<void>;
+  setData: React.Dispatch<React.SetStateAction<T | null>>;
 }
 
 /*
@@ -121,5 +122,5 @@ export function usePolling<T>(
     };
   }, [run, intervalMs]);
 
-  return { data, error, isLoading, refresh };
+  return { data, error, isLoading, refresh, setData };
 }
