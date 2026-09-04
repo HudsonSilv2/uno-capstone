@@ -13,7 +13,11 @@ const app = express();
   needs CORS to be explicitly allowed. CORS_ORIGIN accepts a comma-separated
   list; when it is not set, the local Vite ports are allowed by default.
 */
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:4173')
+const allowedOrigins = (
+  process.env.CORS_ORIGIN ||
+  process.env.FRONTEND_URL ||
+  'http://localhost:5173,http://localhost:4173'
+)
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -39,4 +43,3 @@ app.use('/api', routes);
 app.use(errorMiddleware);
 
 export default app;
-

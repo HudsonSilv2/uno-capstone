@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { gamesApi } from '../services/api';
 import { usePolling } from '../hooks/usePolling';
 import { useAuth } from '../hooks/useAuth';
+import { emitGameAction, socket } from '../services/socket';
 import { UnoCard, UnoCardBack } from '../components/UnoCard';
 import { Modal } from '../components/Modal';
 import { ColorChoice } from '../components/ColorChoice';
@@ -14,7 +15,15 @@ import {
   COLOR_LABELS,
   DIRECTION_LABELS,
 } from '../domain/cards';
-import type { Card, CardColor, GameState, GameStatePlayer } from '../types/api';
+import type {
+  Card,
+  CardColor,
+  DrawCardResult,
+  GameState,
+  GameStatePlayer,
+  PlayCardResult,
+  UnoCallResult,
+} from '../types/api';
 import './TablePage.css';
 
 const POLL_INTERVAL_MS = 2000;
@@ -45,15 +54,39 @@ export function TablePage() {
     setLog((entries) => [message, ...entries].slice(0, MAX_LOG_ENTRIES));
   }, []);
 
-  const fetchState = useCallback(
-    (signal: AbortSignal) => gamesApi.state(gameId, signal),
-    [gameId]
-  );
+  const fetchState = useCallback((signal: AbortSignal) => gamesApi.state(gameId, signal), [gameId]);
 
-  const { data, error, isLoading, refresh } = usePolling<GameState>(
+  const { data, error, isLoading, refresh, setData } = usePolling<GameState>(
     fetchState,
     POLL_INTERVAL_MS
   );
+
+  useEffect(() => {
+    if (!player || Number.isNaN(gameId)) {
+      return;
+    }
+
+    socket.connect();
+    socket.emit('game:join', { gameId });
+
+    const applyState = (nextState: GameState) => {
+      if (nextState.id === gameId) {
+        setData(nextState);
+      }
+    };
+    const applyError = ({ message }: { message: string }) => setActionError(message);
+
+    socket.on('connect', () => socket.emit('game:join', { gameId }));
+    socket.on('game:state', applyState);
+    socket.on('game:error', applyError);
+
+    return () => {
+      socket.off('connect');
+      socket.off('game:state', applyState);
+      socket.off('game:error', applyError);
+      socket.disconnect();
+    };
+  }, [gameId, player, setData]);
 
   /* The host (first to join) is the one who can end the game (PART-05). */
   useEffect(() => {
@@ -130,7 +163,13 @@ export function TablePage() {
   };
 
   const playCard = async (card: Card, chosenColor?: CardColor) => {
-    const result = await runAction(() => gamesApi.playCard(gameId, card.id, chosenColor));
+    const result = await runAction(() =>
+      emitGameAction<PlayCardResult>(
+        'game:play-card',
+        chosenColor ? { gameId, cardId: card.id, chosenColor } : { gameId, cardId: card.id },
+        'play-card'
+      )
+    );
     if (!result) {
       return;
     }
@@ -175,7 +214,9 @@ export function TablePage() {
   };
 
   const handleDraw = async () => {
-    const result = await runAction(() => gamesApi.drawCard(gameId));
+    const result = await runAction(() =>
+      emitGameAction<DrawCardResult>('game:draw-card', { gameId }, 'draw-card')
+    );
     if (!result) {
       return;
     }
@@ -188,7 +229,9 @@ export function TablePage() {
   };
 
   const handleCallUno = async () => {
-    const result = await runAction(() => gamesApi.callUno(gameId));
+    const result = await runAction(() =>
+      emitGameAction<UnoCallResult>('game:uno', { gameId }, 'uno')
+    );
     if (result) {
       pushLog('Você gritou UNO.');
       await refresh();
@@ -248,7 +291,12 @@ export function TablePage() {
 
         <div className="table-bar__tools">
           {hostId === player?.id && (
-            <button type="button" className="btn btn--danger" onClick={handleEndGame} disabled={isActing}>
+            <button
+              type="button"
+              className="btn btn--danger"
+              onClick={handleEndGame}
+              disabled={isActing}
+            >
               Encerrar partida
             </button>
           )}
@@ -435,7 +483,14 @@ function DirectionMark({ direction }: { direction: GameState['direction'] }) {
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path d="M20 3v5h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M20 3v5h-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

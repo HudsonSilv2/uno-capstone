@@ -3,6 +3,7 @@ import { GameService } from '../services/game.service';
 import { GamePlayerService } from '../services/game-player.service';
 import { ScoreService } from '../services/score.service';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import { syncGame } from '../realtime/game.socket';
 
 const gameService = new GameService();
 const gamePlayerService = new GamePlayerService();
@@ -64,6 +65,7 @@ export class GameController {
       const gameId = parseInt(req.params.id as string, 10);
       const playerId = req.user!.id;
       const result = await gamePlayerService.joinGame(gameId, playerId);
+      await syncGame(gameId);
       res.status(201).json(result);
     } catch (error) {
       next(error);
@@ -85,6 +87,7 @@ export class GameController {
       const gameId = parseInt(req.params.id as string, 10);
       const playerId = req.user!.id;
       const result = await gamePlayerService.leaveGame(gameId, playerId);
+      await syncGame(gameId);
       res.json(result);
     } catch (error) {
       next(error);
@@ -95,6 +98,7 @@ export class GameController {
     try {
       const gameId = parseInt(req.params.id as string, 10);
       const result = await gameService.endGame(gameId);
+      await syncGame(gameId);
       res.json(result);
     } catch (error) {
       next(error);
@@ -116,6 +120,7 @@ export class GameController {
     try {
       const gameId = parseInt(req.params.id as string, 10);
       const result = await gameService.startGame(gameId);
+      await syncGame(gameId);
       res.json(result);
     } catch (error) {
       next(error);
@@ -138,6 +143,7 @@ export class GameController {
       const playerId = req.user!.id;
       const { cardValue } = req.body || {};
       const turn = await gameService.advanceTurn(gameId, playerId, cardValue);
+      await syncGame(gameId);
       res.json(turn);
     } catch (error) {
       next(error);
@@ -170,6 +176,7 @@ export class GameController {
       const playerId = req.user!.id;
       const { cardId, chosenColor } = req.body || {};
       const result = await gameService.playCard(gameId, playerId, cardId, chosenColor);
+      await syncGame(gameId);
       res.json(result);
     } catch (error) {
       next(error);
@@ -181,6 +188,7 @@ export class GameController {
       const gameId = parseInt(req.params.id as string, 10);
       const playerId = req.user!.id;
       const result = await gamePlayerService.callUno(gameId, playerId);
+      await syncGame(gameId);
       res.json(result);
     } catch (error) {
       next(error);
@@ -192,6 +200,7 @@ export class GameController {
       const gameId = parseInt(req.params.id as string, 10);
       const playerId = req.user!.id;
       const result = await gameService.drawCard(gameId, playerId);
+      await syncGame(gameId);
       res.json(result);
     } catch (error) {
       next(error);

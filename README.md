@@ -5,6 +5,7 @@ API backend para o jogo UNO, desenvolvida em Node.js com TypeScript, Express e S
 ## Visão Geral
 
 Este projeto implementa o backend da primeira fase do jogo UNO, incluindo:
+
 - Gerenciamento de usuários (Players)
 - Gerenciamento de partidas (Games)
 - Gerenciamento de cartões (Cards) do baralho
@@ -57,9 +58,12 @@ DB_PASSWORD=postgres
 
 JWT_SECRET=your_jwt_secret_here
 CORS_ORIGIN=http://localhost:5173
+FRONTEND_URL=http://localhost:5173
 ```
 
 **Nota sobre `CORS_ORIGIN`:** o front-end roda em outra origem (o servidor de desenvolvimento do Vite), então o navegador só consegue chamar a API se essa origem estiver liberada. A variável aceita uma lista separada por vírgula; sem ela, `http://localhost:5173` e `http://localhost:4173` já são liberados por padrão.
+
+**Nota sobre `FRONTEND_URL`:** em deploy, use a URL pública do front-end. Ela também é aceita pelo Socket.IO e serve como fallback de CORS quando `CORS_ORIGIN` não estiver definido.
 
 **Nota:** a porta padrão do PostgreSQL no container é mapeada para `5433` no host (em vez da porta padrão `5432`) para evitar conflito com uma instalação nativa de PostgreSQL que já esteja rodando na sua máquina. Se a `5433` também estiver ocupada na sua máquina, altere `DB_PORT` no `.env` livremente — o `docker-compose.yml` respeita essa variável.
 
@@ -90,11 +94,13 @@ O `sequelize.sync()` cria tabelas novas, mas não adiciona colunas em tabelas qu
 ## Como Executar
 
 1. Suba o banco de dados:
+
 ```bash
 npm run db:up
 ```
 
 2. Rode a aplicação em modo desenvolvimento (com hot reload):
+
 ```bash
 npm run dev
 ```
@@ -124,9 +130,9 @@ npm install
 npm run dev
 ```
 
-A interface fica em `http://localhost:5173`. O endereço da API vem de `VITE_API_URL` (padrão `http://localhost:3000`).
+A interface fica em `http://localhost:5173`. O endereço da API vem de `VITE_API_URL` (padrão `http://localhost:3000`) e o Socket.IO vem de `VITE_SOCKET_URL` (também `http://localhost:3000` em desenvolvimento).
 
-Fluxo esperado: cadastrar/entrar, criar ou entrar em uma partida, aguardar na sala até dois jogadores, iniciar e jogar na mesa. A API não expõe um canal de tempo real, então a mesa é sincronizada por consulta periódica ao endpoint de estado.
+Fluxo esperado: cadastrar/entrar, criar ou entrar em uma partida, aguardar na sala até dois jogadores, iniciar e jogar na mesa. A mesa usa Socket.IO para sincronizar `game:state` em tempo real e mantém polling periódico como fallback.
 
 ## Padronização de Código
 
@@ -134,12 +140,12 @@ O projeto utiliza **ESLint** e **Prettier** para manter o código consistente en
 
 ### Ferramentas
 
-| Ferramenta | Função |
-|---|---|
-| **ESLint** | Análise estática de código (detecta erros, bad practices) |
-| **Prettier** | Formatação automática de código (aspas, indentação, etc.) |
-| **eslint-config-prettier** | Desativa regras do ESLint que conflitam com o Prettier |
-| **@typescript-eslint** | Suporte ao TypeScript no ESLint |
+| Ferramenta                 | Função                                                    |
+| -------------------------- | --------------------------------------------------------- |
+| **ESLint**                 | Análise estática de código (detecta erros, bad practices) |
+| **Prettier**               | Formatação automática de código (aspas, indentação, etc.) |
+| **eslint-config-prettier** | Desativa regras do ESLint que conflitam com o Prettier    |
+| **@typescript-eslint**     | Suporte ao TypeScript no ESLint                           |
 
 ### Scripts Disponíveis
 
@@ -185,6 +191,7 @@ frontend/
 ```
 
 ### Backend
+
 ```
 src/
 ├── config/
@@ -220,18 +227,21 @@ docker-compose.yml             # Ambiente do PostgreSQL compartilhado pelo time
 O projeto segue o padrão de **3 camadas**:
 
 ### 1. Camada de Apresentação (Controllers)
+
 - Recebe requisições HTTP
 - Valida estrutura de dados básica
 - Chama a camada de negócio
 - Retorna respostas HTTP com status apropriado
 
 ### 2. Camada de Negócio (Services)
+
 - Implementa regras de negócio
 - Valida dados de domínio
 - Coordena operações de banco de dados
 - Lança exceções estruturadas (AppError)
 
 ### 3. Camada de Acesso a Dados (Models)
+
 - Define esquema das entidades usando Sequelize
 - Encapsula operações de persistência
 - Valida tipos de dados
@@ -247,6 +257,7 @@ GET /health
 Retorna o status da aplicação.
 
 **Resposta (200 OK):**
+
 ```json
 {
   "status": "OK"
@@ -269,6 +280,7 @@ Content-Type: application/json
 ```
 
 **Resposta (201 Created):**
+
 ```json
 {
   "id": 1,
@@ -287,6 +299,7 @@ GET /api/players/:id
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "id": 1,
@@ -312,6 +325,7 @@ Content-Type: application/json
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "id": 1,
@@ -330,6 +344,7 @@ DELETE /api/players/:id
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "message": "Player deleted successfully"
@@ -352,6 +367,7 @@ Content-Type: application/json
 ```
 
 **Resposta (201 Created):**
+
 ```json
 {
   "id": 1,
@@ -369,6 +385,7 @@ GET /api/games
 ```
 
 **Resposta (200 OK):**
+
 ```json
 [
   {
@@ -388,6 +405,7 @@ GET /api/games/:id
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "id": 1,
@@ -410,6 +428,7 @@ Content-Type: application/json
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "id": 1,
@@ -427,6 +446,7 @@ DELETE /api/games/:id
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "message": "Game deleted successfully"
@@ -442,6 +462,7 @@ POST /api/games/:id/uno
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "gameId": 1,
@@ -470,6 +491,7 @@ Content-Type: application/json
 **Valores Válidos:** `0`-`9`, `Skip`, `Reverse`, `Draw Two`, `Wild Card`, `Wild Draw Four`
 
 **Resposta (201 Created):**
+
 ```json
 {
   "id": 1,
@@ -488,6 +510,7 @@ GET /api/cards/:id
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "id": 1,
@@ -512,6 +535,7 @@ Content-Type: application/json
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "id": 1,
@@ -530,6 +554,7 @@ DELETE /api/cards/:id
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "message": "Card deleted successfully"
@@ -543,6 +568,7 @@ GET /api/cards/game/:gameId
 ```
 
 **Resposta (200 OK):**
+
 ```json
 [
   {
@@ -580,6 +606,7 @@ Content-Type: application/json
 ```
 
 **Resposta (201 Created):**
+
 ```json
 {
   "id": "1",
@@ -597,6 +624,7 @@ GET /api/scores/:id
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "id": "1",
@@ -619,6 +647,7 @@ Content-Type: application/json
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "id": "1",
@@ -636,6 +665,7 @@ DELETE /api/scores/:id
 ```
 
 **Resposta (200 OK):**
+
 ```json
 {
   "message": "Score deleted successfully"
@@ -644,20 +674,21 @@ DELETE /api/scores/:id
 
 ## Códigos HTTP Esperados
 
-| Código | Significado |
-|--------|-------------|
-| 200 | Sucesso (consulta, atualização, deleção) |
-| 201 | Criação bem-sucedida |
-| 400 | Dados inválidos ou erro de validação |
-| 404 | Recurso não encontrado |
-| 409 | Conflito (ex: email duplicado) |
-| 500 | Erro interno do servidor |
+| Código | Significado                              |
+| ------ | ---------------------------------------- |
+| 200    | Sucesso (consulta, atualização, deleção) |
+| 201    | Criação bem-sucedida                     |
+| 400    | Dados inválidos ou erro de validação     |
+| 404    | Recurso não encontrado                   |
+| 409    | Conflito (ex: email duplicado)           |
+| 500    | Erro interno do servidor                 |
 
 ## Tratamento de Erros
 
 A aplicação possui um middleware centralizado de tratamento de erros que padroniza as respostas de erro.
 
 **Formato de erro:**
+
 ```json
 {
   "error": "Mensagem descritiva do erro"
@@ -667,6 +698,7 @@ A aplicação possui um middleware centralizado de tratamento de erros que padro
 **Exemplos:**
 
 Email duplicado (400):
+
 ```json
 {
   "error": "Email already in use"
@@ -674,6 +706,7 @@ Email duplicado (400):
 ```
 
 Recurso não encontrado (404):
+
 ```json
 {
   "error": "Player not found"
@@ -681,6 +714,7 @@ Recurso não encontrado (404):
 ```
 
 Validação de cartão (400):
+
 ```json
 {
   "error": "Color must be red, blue, yellow, green, or wild"
@@ -752,6 +786,7 @@ Ao fazer commits, siga o padrão semântico:
 - `perf`: Melhorias de performance
 
 Exemplos:
+
 ```
 feat: implement card CRUD endpoints
 docs: update README with API documentation
@@ -761,6 +796,7 @@ fix: validate card color in service layer
 ## Suporte
 
 Para dúvidas ou problemas:
+
 1. Verifique a documentação acima
 2. Consulte os comentários no código
 
