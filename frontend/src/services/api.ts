@@ -1,12 +1,14 @@
 import { request, tokenStorage } from './http';
 import type {
   CardColor,
+  ChallengeResult,
   DrawCardResult,
   Game,
   GamePlayer,
   GameState,
   Player,
   PlayCardResult,
+  ReadyResult,
   RoundResult,
   ScoreEntry,
   Session,
@@ -109,6 +111,17 @@ export const gamesApi = {
 
   callUno(gameId: number): Promise<UnoCallResult> {
     return request<UnoCallResult>(`/games/${gameId}/uno`, { method: 'POST' });
+  },
+
+  challenge(gameId: number, targetPlayerId: number): Promise<ChallengeResult> {
+    return request<ChallengeResult>(`/games/${gameId}/challenge`, {
+      method: 'POST',
+      body: { targetPlayerId },
+    });
+  },
+
+  ready(gameId: number): Promise<ReadyResult> {
+    return request<ReadyResult>(`/games/${gameId}/ready`, { method: 'POST' });
   },
 
   end(gameId: number): Promise<RoundResult> {

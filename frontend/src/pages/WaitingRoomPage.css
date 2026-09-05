@@ -69,6 +69,29 @@
   color: var(--text-faint);
 }
 
+.room__status {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.room__status--ready {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.room__status--waiting {
+  color: var(--text-faint);
+  background: var(--ink-700);
+  border: 1px solid var(--line);
+}
+
 .room__actions {
   display: flex;
   flex-wrap: wrap;

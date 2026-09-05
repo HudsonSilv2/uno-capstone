@@ -24,5 +24,8 @@ router.get('/:id/discard', gameController.getTopDiscard);
 router.post('/:id/play', authMiddleware, gameController.playCard);
 router.post('/:id/draw', authMiddleware, gameController.drawCard);
 router.post('/:id/uno', authMiddleware, gameController.callUno);
+router.post('/:id/challenge', authMiddleware, gameController.challenge);
+router.post('/:id/ready', authMiddleware, gameController.ready);
+
 
 export default router;

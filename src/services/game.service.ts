@@ -4,6 +4,7 @@ import Player from '../models/player.model';
 import Card from '../models/card.model';
 import Score from '../models/score.model';
 import GamePlayer from '../models/game-player.model';
+import { drawCardsForPlayer, reshuffleDiscardIntoDeck } from './deck.service';
 import { AppError } from '../middlewares/error.middleware';
 import { memoize, filter, pipe, accumulate } from '../utils/functional-helpers';
 
@@ -241,7 +242,7 @@ export class GameService {
           model: Player,
           as: 'players',
           attributes: ['id', 'name', 'email'],
-          through: { attributes: ['id', 'joinedAt'] },
+          through: { attributes: ['id', 'joinedAt', 'isReady'] },
         },
       ],
     });
@@ -257,6 +258,14 @@ export class GameService {
     const gamePlayers = (game as any).players || [];
     if (gamePlayers.length < 2) {
       throw new AppError('At least 2 players are required to start the game', 400);
+    }
+
+    // LOBBY-01: all players must have confirmed they are ready before the host can start
+    const hasUnreadyPlayers = gamePlayers.some(
+      (p: any) => p.GamePlayer?.isReady === false || p.GamePlayer?.isReady === 0
+    );
+    if (hasUnreadyPlayers) {
+      throw new AppError('All players must be ready before the game can start', 400);
     }
 
     const CARDS_PER_PLAYER = 7;
@@ -450,21 +459,9 @@ export class GameService {
     if (cardValue === 'Draw Two' || cardValue === 'Wild Draw Four') {
       const drawCount = cardValue === 'Draw Two' ? 2 : 4;
 
-      const deckCards = await Card.findAll({
-        where: { gameId, location: 'deck', playerId: null },
-        limit: drawCount,
-        order: [['id', 'ASC']],
-      });
+      const deckCards = await drawCardsForPlayer(gameId, skippedPlayer.id, drawCount);
 
       if (deckCards.length > 0) {
-        await Card.update(
-          { playerId: skippedPlayer.id, location: 'hand' },
-          {
-            where: {
-              id: { [Op.in]: deckCards.map((c) => c.id) },
-            },
-          }
-        );
         cardsDrawn = deckCards.length;
         await GamePlayer.update(
           { saidUno: false },
@@ -575,20 +572,6 @@ export class GameService {
     };
   }
 
-  // Moves every discarded card except the current top one back into the
-  // deck, so the game can keep going once the deck runs out.
-  private async reshuffleDiscardIntoDeck(gameId: number) {
-    const topDiscard = await this.getTopDiscardCard(gameId);
-    if (!topDiscard) {
-      return;
-    }
-
-    await Card.update(
-      { location: 'deck', playerId: null },
-      { where: { gameId, location: 'discard', id: { [Op.ne]: topDiscard.id } } }
-    );
-  }
-
   public async drawCard(gameId: number, playerId: number) {
     const game = await Game.findByPk(gameId);
     if (!game) {
@@ -610,7 +593,7 @@ export class GameService {
     let deckCard = await Card.findOne(deckQuery);
 
     if (!deckCard) {
-      await this.reshuffleDiscardIntoDeck(gameId);
+      await reshuffleDiscardIntoDeck(gameId);
       deckCard = await Card.findOne(deckQuery);
     }
 

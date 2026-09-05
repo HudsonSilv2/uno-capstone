@@ -5,16 +5,22 @@ interface PollingResult<T> {
   error: string | null;
   isLoading: boolean;
   refresh: () => Promise<void>;
-  setData: React.Dispatch<React.SetStateAction<T | null>>;
+  /*
+    Applies state that arrived out of band - a socket push, say. It also
+    invalidates any request already in flight, so a poll that started before
+    the push cannot answer afterwards and undo it.
+  */
+  applyExternalData: (next: T) => void;
 }
 
 /*
   The API has no realtime channel, so the game state is read by polling. Pass
   `null` as the interval to stop polling once the game is over.
 
-  Only the most recent request is applied: a poll fired before a play could
-  answer after it and put the old state back on screen for a couple of seconds.
-  Polling also pauses while the tab is in the background.
+  Only the most recent update is applied, whether it came from a poll or from
+  `applyExternalData`: a request fired before a play could answer after it and
+  put the old state back on screen for a couple of seconds. Polling also pauses
+  while the tab is in the background.
 
   `fetcher` must be memoized by the caller - a new reference restarts the cycle.
 */
@@ -122,5 +128,13 @@ export function usePolling<T>(
     };
   }, [run, intervalMs]);
 
-  return { data, error, isLoading, refresh, setData };
+  const applyExternalData = useCallback((next: T) => {
+    /* Bumping the id makes every in-flight request stale on arrival. */
+    lastRequestIdRef.current += 1;
+    setData(next);
+    setError(null);
+    setIsLoading(false);
+  }, []);
+
+  return { data, error, isLoading, refresh, applyExternalData };
 }

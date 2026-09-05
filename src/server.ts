@@ -12,8 +12,16 @@ initGameSocket(httpServer);
 
 const startServer = async () => {
   try {
-    await sequelize.sync();
-    await applyPendingColumns(sequelize);
+    /*
+      With a managed database (see db/supabase) the SQL files own the schema,
+      so DB_SYNC=false keeps the API from creating tables on its own.
+    */
+    if (process.env.DB_SYNC !== 'false') {
+      await sequelize.sync();
+      await applyPendingColumns(sequelize);
+    } else {
+      await sequelize.authenticate();
+    }
     console.log('Database connected and synced.');
 
     httpServer.listen(PORT, () => {

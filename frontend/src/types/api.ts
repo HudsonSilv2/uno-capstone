@@ -69,6 +69,7 @@ export interface GamePlayer {
   email: string;
   joinedAt: string;
   saidUno: boolean;
+  isReady: boolean;
 }
 
 export interface GameStatePlayer {
@@ -155,4 +156,17 @@ export interface UnoCallResult {
   gameId: number;
   playerId: number;
   saidUno: boolean;
+}
+
+export interface ChallengeResult {
+  gameId: number;
+  challengerId: number;
+  targetId: number;
+  penaltyCards: number;
+}
+
+export interface ReadyResult {
+  gameId: number;
+  playerId: number;
+  isReady: boolean;
 }

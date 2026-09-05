@@ -85,7 +85,23 @@ Para parar o banco:
 npm run db:down
 ```
 
-### 3. Sincronização das Tabelas
+### 3. Banco gerenciado (Supabase)
+
+O time decidiu usar o Supabase como banco Postgres gerenciado, no lugar do
+container, quando quiser rodar fora da máquina de cada um. A troca é só de
+variável de ambiente: preencher `DATABASE_URL` faz o código ignorar as
+variáveis `DB_*` e ligar TLS sozinho.
+
+O passo a passo, os arquivos SQL e a lista de variáveis estão em
+[`db/supabase/README.md`](db/supabase/README.md). São dois scripts para rodar
+uma vez no SQL Editor: um cria as tabelas e o outro tranca o acesso público —
+esse segundo não é opcional, porque o Supabase publica o schema `public` numa
+API REST que responde à chave anônima do projeto.
+
+O Supabase entra apenas como banco. A autenticação continua sendo o JWT emitido
+pela nossa API e o tempo real continua no Socket.IO.
+
+### 4. Sincronização das Tabelas
 
 As tabelas são criadas/sincronizadas automaticamente ao iniciar a aplicação (via `sequelize.sync()`), não sendo necessário rodar migrations manualmente nesta fase do projeto.
 

@@ -3,6 +3,7 @@ import Game from '../models/game.model';
 import Player from '../models/player.model';
 import Card from '../models/card.model';
 import { AppError } from '../middlewares/error.middleware';
+import { drawCardsForPlayer } from './deck.service';
 
 export class GamePlayerService {
   public async joinGame(gameId: number, playerId: number) {
@@ -67,6 +68,7 @@ export class GamePlayerService {
         email: playerData.email,
         joinedAt: entry.joinedAt,
         saidUno: entry.saidUno ?? false,
+        isReady: entry.isReady ?? false,
       };
     });
   }
@@ -152,7 +154,86 @@ export class GamePlayerService {
     Clears the "UNO" flag once the player is no longer down to a single card,
     so the state does not stay stale between turns.
   */
+  /*
+    LOBBY-01: marks the player as ready inside the waiting room.
+    Only allowed while the game is still in 'waiting' state.
+  */
+  public async setReady(gameId: number, playerId: number) {
+    const game = await Game.findByPk(gameId);
+    if (!game) {
+      throw new AppError('Game not found', 404);
+    }
+
+    if (game.status !== 'waiting') {
+      throw new AppError('Game has already started', 400);
+    }
+
+    const entry = await GamePlayer.findOne({ where: { gameId, playerId } });
+    if (!entry) {
+      throw new AppError('Player is not in this game', 400);
+    }
+
+    entry.isReady = true;
+    await entry.save();
+
+    return { gameId, playerId, isReady: true };
+  }
+
   public async clearUnoFlag(gameId: number, playerId: number) {
     await GamePlayer.update({ saidUno: false }, { where: { gameId, playerId } });
+  }
+
+  /*
+    GAME-12: a player can challenge an opponent who has exactly one card and
+    did not call UNO. The penalty is 2 extra cards drawn from the deck.
+    The turn is NOT advanced — the challenger does not lose their turn.
+  */
+  public async challengeUno(gameId: number, challengerId: number, targetId: number) {
+    const game = await Game.findByPk(gameId);
+    if (!game) {
+      throw new AppError('Game not found', 404);
+    }
+
+    if (game.status !== 'in_progress') {
+      throw new AppError('Game is not in progress', 400);
+    }
+
+    if (challengerId === targetId) {
+      throw new AppError('You cannot challenge yourself', 400);
+    }
+
+    const challengerEntry = await GamePlayer.findOne({ where: { gameId, playerId: challengerId } });
+    if (!challengerEntry) {
+      throw new AppError('You are not in this game', 400);
+    }
+
+    const targetEntry = await GamePlayer.findOne({ where: { gameId, playerId: targetId } });
+    if (!targetEntry) {
+      throw new AppError('Target player is not in this game', 400);
+    }
+
+    const handSize = await Card.count({ where: { gameId, playerId: targetId, location: 'hand' } });
+    if (handSize !== 1) {
+      throw new AppError('Target player does not have exactly one card', 400);
+    }
+
+    if (targetEntry.saidUno) {
+      throw new AppError('Target player already said UNO', 400);
+    }
+
+    /*
+      Penalty of 2 cards. Going through drawCardsForPlayer matters here: late in
+      a round the deck is usually empty, which is exactly when someone is down
+      to a single card, and without recycling the discard the penalty would
+      quietly draw nothing.
+    */
+    const deckCards = await drawCardsForPlayer(gameId, targetId, 2);
+
+    return {
+      gameId,
+      challengerId,
+      targetId,
+      penaltyCards: deckCards.length,
+    };
   }
 }

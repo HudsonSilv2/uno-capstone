@@ -9,9 +9,9 @@ export const socket = io(import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:30
 });
 
 export function emitGameAction<T>(
-  event: 'game:play-card' | 'game:draw-card' | 'game:uno',
+  event: 'game:play-card' | 'game:draw-card' | 'game:uno' | 'game:challenge',
   payload: Record<string, unknown>,
-  resultType: 'play-card' | 'draw-card' | 'uno'
+  resultType: 'play-card' | 'draw-card' | 'uno' | 'challenge'
 ): Promise<T> {
   if (!socket.connected) {
     socket.connect();

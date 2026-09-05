@@ -178,6 +178,25 @@ export function initGameSocket(httpServer: HttpServer): Server {
         socket.emit('game:error', getErrorPayload(error));
       }
     });
+
+    socket.on(
+      'game:challenge',
+      async ({ gameId, targetPlayerId }: { gameId: number; targetPlayerId: number }) => {
+        try {
+          const playerId = socket.data.playerId;
+          if (!playerId) {
+            throw new AppError('Player not authenticated', 401);
+          }
+
+          const result = await gamePlayerService.challengeUno(gameId, playerId, targetPlayerId);
+          socket.emit('game:action-result', { type: 'challenge', result });
+          await syncGame(gameId);
+        } catch (error) {
+          socket.emit('game:error', getErrorPayload(error));
+        }
+      }
+    );
+
   });
 
   return io;
