@@ -10,6 +10,16 @@ jest.mock('../../models/score.model', () => ({
   },
 }));
 
+jest.mock('../../models/game.model', () => ({
+  __esModule: true,
+  default: {},
+}));
+
+jest.mock('../../models/player.model', () => ({
+  __esModule: true,
+  default: {},
+}));
+
 const mockedScore = Score as unknown as {
   findByPk: jest.Mock;
   findAll: jest.Mock;
@@ -170,6 +180,124 @@ describe('ScoreService', () => {
       const result = await scoreService.getScoresByGameId(999);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('getScoreHistory', () => {
+    const timestamp = new Date('2026-06-01T12:00:00.000Z');
+
+    const buildHistoryScore = (overrides: Record<string, unknown> = {}) => ({
+      id: 1,
+      playerId: 10,
+      gameId: 5,
+      score: 40,
+      timestamp,
+      player: { id: 10, name: 'Alice' },
+      gameRef: { id: 5, title: 'Game 1', status: 'finished' },
+      ...overrides,
+    });
+
+    it('throws AppError(400) when neither playerId nor gameId is provided', async () => {
+      await expect(scoreService.getScoreHistory({})).rejects.toMatchObject({
+        message: 'Provide playerId or gameId to query the score history',
+        statusCode: 400,
+      });
+    });
+
+    it('returns history filtered by playerId, only for finished games', async () => {
+      mockedScore.findAll.mockResolvedValue([
+        buildHistoryScore(),
+        buildHistoryScore({ id: 2, gameId: 6, gameRef: { id: 6, title: 'Game 2', status: 'in_progress' } }),
+      ]);
+
+      const result = await scoreService.getScoreHistory({ playerId: 10 });
+
+      expect(mockedScore.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { playerId: 10 } })
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: '1',
+        playerId: '10',
+        playerName: 'Alice',
+        gameId: '5',
+        gameTitle: 'Game 1',
+        score: 40,
+        date: timestamp,
+      });
+    });
+
+    it('returns history filtered by gameId, only for finished games', async () => {
+      mockedScore.findAll.mockResolvedValue([buildHistoryScore()]);
+
+      const result = await scoreService.getScoreHistory({ gameId: 5 });
+
+      expect(mockedScore.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { gameId: 5 } })
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].gameId).toBe('5');
+      expect(result[0].gameTitle).toBe('Game 1');
+    });
+
+    it('accepts both playerId and gameId simultaneously', async () => {
+      mockedScore.findAll.mockResolvedValue([buildHistoryScore()]);
+
+      const result = await scoreService.getScoreHistory({ playerId: 10, gameId: 5 });
+
+      expect(mockedScore.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { playerId: 10, gameId: 5 } })
+      );
+      expect(result).toHaveLength(1);
+    });
+
+    it('excludes entries from games that are not yet finished', async () => {
+      mockedScore.findAll.mockResolvedValue([
+        buildHistoryScore({ gameRef: { id: 5, title: 'Game in progress', status: 'in_progress' } }),
+        buildHistoryScore({ id: 2, gameRef: { id: 5, title: 'Game waiting', status: 'waiting' } }),
+      ]);
+
+      const result = await scoreService.getScoreHistory({ playerId: 10 });
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('returns an empty array when there are no scores for the filter', async () => {
+      mockedScore.findAll.mockResolvedValue([]);
+
+      const result = await scoreService.getScoreHistory({ playerId: 999 });
+
+      expect(result).toEqual([]);
+    });
+
+    it('returns results ordered by timestamp DESC (most recent first)', async () => {
+      const older = buildHistoryScore({ id: 1, timestamp: new Date('2026-01-01'), score: 20 });
+      const newer = buildHistoryScore({ id: 2, timestamp: new Date('2026-06-01'), score: 50 });
+      mockedScore.findAll.mockResolvedValue([newer, older]);
+
+      await scoreService.getScoreHistory({ playerId: 10 });
+
+      expect(mockedScore.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ order: [['timestamp', 'DESC']] })
+      );
+    });
+
+    it('sets playerName to null when the score has no associated player', async () => {
+      mockedScore.findAll.mockResolvedValue([buildHistoryScore({ player: undefined })]);
+
+      const [result] = await scoreService.getScoreHistory({ playerId: 10 });
+
+      expect(result.playerName).toBeNull();
+    });
+
+    it('sets gameTitle to null when the game ref is missing', async () => {
+      mockedScore.findAll.mockResolvedValue([
+        buildHistoryScore({ gameRef: { id: 5, title: undefined, status: 'finished' } }),
+      ]);
+
+      const [result] = await scoreService.getScoreHistory({ playerId: 10 });
+
+      expect(result.gameTitle).toBeNull();
     });
   });
 });
