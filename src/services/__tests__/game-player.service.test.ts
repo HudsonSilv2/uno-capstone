@@ -18,6 +18,8 @@ jest.mock('../../models/card.model', () => ({
   __esModule: true,
   default: {
     count: jest.fn(),
+    findAll: jest.fn(),
+    update: jest.fn(),
   },
 }));
 
@@ -38,6 +40,8 @@ const mockedGamePlayer = GamePlayer as unknown as {
 
 const mockedCard = Card as unknown as {
   count: jest.Mock;
+  findAll: jest.Mock;
+  update: jest.Mock;
 };
 
 const mockedGame = Game as unknown as {
@@ -287,6 +291,104 @@ describe('GamePlayerService', () => {
       await expect(gamePlayerService.callUno(999, 7)).rejects.toMatchObject({
         message: 'Game not found',
         statusCode: 404,
+      });
+    });
+  });
+
+  describe('setReady', () => {
+    it('sets the player isReady flag to true when in waiting state', async () => {
+      mockedGame.findByPk.mockResolvedValue({ id: 1, status: 'waiting' });
+      const save = jest.fn().mockResolvedValue(undefined);
+      mockedGamePlayer.findOne.mockResolvedValue({ gameId: 1, playerId: 5, isReady: false, save });
+
+      const result = await gamePlayerService.setReady(1, 5);
+
+      expect(save).toHaveBeenCalled();
+      expect(result).toEqual({ gameId: 1, playerId: 5, isReady: true });
+    });
+
+    it('throws AppError(404) if game is not found', async () => {
+      mockedGame.findByPk.mockResolvedValue(null);
+
+      await expect(gamePlayerService.setReady(999, 5)).rejects.toMatchObject({
+        message: 'Game not found',
+        statusCode: 404,
+      });
+    });
+
+    it('throws AppError(400) if game is already started', async () => {
+      mockedGame.findByPk.mockResolvedValue({ id: 1, status: 'in_progress' });
+
+      await expect(gamePlayerService.setReady(1, 5)).rejects.toMatchObject({
+        message: 'Game has already started',
+        statusCode: 400,
+      });
+    });
+
+    it('throws AppError(400) if player is not in game', async () => {
+      mockedGame.findByPk.mockResolvedValue({ id: 1, status: 'waiting' });
+      mockedGamePlayer.findOne.mockResolvedValue(null);
+
+      await expect(gamePlayerService.setReady(1, 5)).rejects.toMatchObject({
+        message: 'Player is not in this game',
+        statusCode: 400,
+      });
+    });
+  });
+
+  describe('challengeUno', () => {
+    it('penalizes the target player with 2 cards if they have 1 card and did not say UNO', async () => {
+      mockedGame.findByPk.mockResolvedValue({ id: 1, status: 'in_progress' });
+      mockedGamePlayer.findOne
+        .mockResolvedValueOnce({ gameId: 1, playerId: 1 }) // challenger
+        .mockResolvedValueOnce({ gameId: 1, playerId: 2, saidUno: false }); // target
+      mockedCard.count.mockResolvedValue(1); // target has 1 card
+      mockedCard.findAll.mockResolvedValue([{ id: 101 }, { id: 102 }]);
+      mockedCard.update.mockResolvedValue([2]);
+
+      const result = await gamePlayerService.challengeUno(1, 1, 2);
+
+      expect(mockedCard.update).toHaveBeenCalled();
+      expect(result).toEqual({
+        gameId: 1,
+        challengerId: 1,
+        targetId: 2,
+        penaltyCards: 2,
+      });
+    });
+
+    it('throws AppError(400) if challenger tries to challenge themselves', async () => {
+      mockedGame.findByPk.mockResolvedValue({ id: 1, status: 'in_progress' });
+
+      await expect(gamePlayerService.challengeUno(1, 1, 1)).rejects.toMatchObject({
+        message: 'You cannot challenge yourself',
+        statusCode: 400,
+      });
+    });
+
+    it('throws AppError(400) if target already said UNO', async () => {
+      mockedGame.findByPk.mockResolvedValue({ id: 1, status: 'in_progress' });
+      mockedGamePlayer.findOne
+        .mockResolvedValueOnce({ gameId: 1, playerId: 1 })
+        .mockResolvedValueOnce({ gameId: 1, playerId: 2, saidUno: true });
+      mockedCard.count.mockResolvedValue(1);
+
+      await expect(gamePlayerService.challengeUno(1, 1, 2)).rejects.toMatchObject({
+        message: 'Target player already said UNO',
+        statusCode: 400,
+      });
+    });
+
+    it('throws AppError(400) if target does not have exactly one card', async () => {
+      mockedGame.findByPk.mockResolvedValue({ id: 1, status: 'in_progress' });
+      mockedGamePlayer.findOne
+        .mockResolvedValueOnce({ gameId: 1, playerId: 1 })
+        .mockResolvedValueOnce({ gameId: 1, playerId: 2, saidUno: false });
+      mockedCard.count.mockResolvedValue(3);
+
+      await expect(gamePlayerService.challengeUno(1, 1, 2)).rejects.toMatchObject({
+        message: 'Target player does not have exactly one card',
+        statusCode: 400,
       });
     });
   });

@@ -16,7 +16,8 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "frontend": "npm run dev --prefix frontend",
-    "frontend:build": "npm run build --prefix frontend"
+    "frontend:build": "npm run build --prefix frontend",
+    "verify:rules": "node scripts/verify-game-rules.mjs"
   },
   "repository": {
     "type": "git",

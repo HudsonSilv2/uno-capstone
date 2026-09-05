@@ -208,6 +208,17 @@ ul {
   border-color: #d7a44a;
 }
 
+.btn--success {
+  background: #10b981;
+  border-color: #10b981;
+  color: #062b1e;
+}
+
+.btn--success:hover:not(:disabled) {
+  background: #059669;
+  border-color: #059669;
+}
+
 .btn--ghost {
   background: transparent;
   border-color: transparent;
@@ -239,6 +250,11 @@ ul {
 .btn--lg {
   padding: 12px 22px;
   font-size: 0.95rem;
+}
+
+.btn--sm {
+  padding: 4px 10px;
+  font-size: 0.75rem;
 }
 
 /* ---------- Forms ---------- */

@@ -18,6 +18,7 @@ import {
 import type {
   Card,
   CardColor,
+  ChallengeResult,
   DrawCardResult,
   GameState,
   GameStatePlayer,
@@ -27,6 +28,12 @@ import type {
 import './TablePage.css';
 
 const POLL_INTERVAL_MS = 2000;
+/*
+  While the socket is up the server pushes every change, so polling drops to a
+  slow heartbeat. It is not switched off entirely: a push that never arrives
+  (a dropped event, a server restart) would otherwise leave the table frozen.
+*/
+const REALTIME_FALLBACK_POLL_MS = 20000;
 const MAX_LOG_ENTRIES = 12;
 
 /*
@@ -56,9 +63,11 @@ export function TablePage() {
 
   const fetchState = useCallback((signal: AbortSignal) => gamesApi.state(gameId, signal), [gameId]);
 
-  const { data, error, isLoading, refresh, setData } = usePolling<GameState>(
+  const [isRealtime, setIsRealtime] = useState(() => socket.connected);
+
+  const { data, error, isLoading, refresh, applyExternalData } = usePolling<GameState>(
     fetchState,
-    POLL_INTERVAL_MS
+    isRealtime ? REALTIME_FALLBACK_POLL_MS : POLL_INTERVAL_MS
   );
 
   useEffect(() => {
@@ -66,27 +75,36 @@ export function TablePage() {
       return;
     }
 
-    socket.connect();
-    socket.emit('game:join', { gameId });
-
+    const join = () => socket.emit('game:join', { gameId });
+    const onConnect = () => {
+      setIsRealtime(true);
+      join();
+    };
+    const onDisconnect = () => setIsRealtime(false);
     const applyState = (nextState: GameState) => {
       if (nextState.id === gameId) {
-        setData(nextState);
+        applyExternalData(nextState);
       }
     };
     const applyError = ({ message }: { message: string }) => setActionError(message);
 
-    socket.on('connect', () => socket.emit('game:join', { gameId }));
+    /* Named handlers: socket is a shared module, so off() must not be blanket. */
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
     socket.on('game:state', applyState);
     socket.on('game:error', applyError);
 
+    socket.connect();
+    join();
+
     return () => {
-      socket.off('connect');
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
       socket.off('game:state', applyState);
       socket.off('game:error', applyError);
       socket.disconnect();
     };
-  }, [gameId, player, setData]);
+  }, [gameId, player, applyExternalData]);
 
   /* The host (first to join) is the one who can end the game (PART-05). */
   useEffect(() => {
@@ -238,6 +256,20 @@ export function TablePage() {
     }
   };
 
+  const handleChallenge = async (targetPlayerId: number, targetName: string) => {
+    const result = await runAction(() =>
+      emitGameAction<ChallengeResult>('game:challenge', { gameId, targetPlayerId }, 'challenge')
+    );
+    if (result) {
+      pushLog(
+        result.penaltyCards > 0
+          ? `Você desafiou ${targetName}! Ele comprou ${result.penaltyCards} carta(s) de penalidade.`
+          : `Você desafiou ${targetName}, mas não havia cartas no baralho para penalizá-lo.`
+      );
+      await refresh();
+    }
+  };
+
   const handleEndGame = async () => {
     const result = await runAction(() => gamesApi.end(gameId));
     if (result) {
@@ -330,6 +362,17 @@ export function TablePage() {
                   </span>
                 </span>
                 {opponent.saidUno && <span className="uno-flag">UNO</span>}
+                {opponent.cardCount === 1 && !opponent.saidUno && (
+                  <button
+                    type="button"
+                    className="btn btn--danger btn--sm"
+                    disabled={isActing}
+                    onClick={() => void handleChallenge(opponent.id, opponent.name)}
+                    title={`Desafiar ${opponent.name} por não ter dito UNO`}
+                  >
+                    Desafiar
+                  </button>
+                )}
               </li>
             ))}
           </ul>

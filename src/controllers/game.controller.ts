@@ -195,6 +195,31 @@ export class GameController {
     }
   }
 
+  public async challenge(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const gameId = parseInt(req.params.id as string, 10);
+      const challengerId = req.user!.id;
+      const { targetPlayerId } = req.body;
+      const result = await gamePlayerService.challengeUno(gameId, challengerId, targetPlayerId);
+      await syncGame(gameId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async ready(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const gameId = parseInt(req.params.id as string, 10);
+      const playerId = req.user!.id;
+      const result = await gamePlayerService.setReady(gameId, playerId);
+      await syncGame(gameId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   public async drawCard(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const gameId = parseInt(req.params.id as string, 10);

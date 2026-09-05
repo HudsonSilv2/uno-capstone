@@ -12,6 +12,7 @@ export class GamePlayer extends Model {
   public playerId!: number;
   public joinedAt!: Date;
   public saidUno!: boolean;
+  public isReady!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -45,6 +46,11 @@ GamePlayer.init(
       defaultValue: DataTypes.NOW,
     },
     saidUno: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    isReady: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,

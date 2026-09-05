@@ -9,6 +9,8 @@ import type { Game, GamePlayer } from '../types/api';
 import './WaitingRoomPage.css';
 
 const POLL_INTERVAL_MS = 2500;
+/* Slow heartbeat while the socket is delivering updates. See TablePage. */
+const REALTIME_FALLBACK_POLL_MS = 20000;
 
 interface RoomData {
   game: Game;
@@ -45,7 +47,12 @@ export function WaitingRoomPage() {
     [gameId]
   );
 
-  const { data, error, isLoading, refresh } = usePolling(fetchRoom, POLL_INTERVAL_MS);
+  const [isRealtime, setIsRealtime] = useState(() => socket.connected);
+
+  const { data, error, isLoading, refresh } = usePolling(
+    fetchRoom,
+    isRealtime ? REALTIME_FALLBACK_POLL_MS : POLL_INTERVAL_MS
+  );
 
   const game = data?.game ?? null;
   const players = useMemo(() => data?.players ?? [], [data]);
@@ -53,28 +60,39 @@ export function WaitingRoomPage() {
   const host = players[0] ?? null;
   const isHost = host !== null && host.id === player?.id;
   const isMember = players.some((entry) => entry.id === player?.id);
+  const myPlayerEntry = players.find((entry) => entry.id === player?.id);
+  const isReady = myPlayerEntry?.isReady ?? false;
   const isFull = game !== null && players.length >= game.maxPlayers;
-  const canStart = isHost && players.length >= MIN_PLAYERS_TO_START;
+  const allReady = players.length >= MIN_PLAYERS_TO_START && players.every((entry) => entry.isReady);
+  const canStart = isHost && allReady;
 
   useEffect(() => {
     if (!player || !isMember || Number.isNaN(gameId)) {
       return;
     }
 
-    socket.connect();
-    socket.emit('game:join', { gameId });
-
+    const join = () => socket.emit('game:join', { gameId });
+    const onConnect = () => {
+      setIsRealtime(true);
+      join();
+    };
+    const onDisconnect = () => setIsRealtime(false);
     const refreshRoom = ({ gameId: updatedGameId }: { gameId: number }) => {
       if (updatedGameId === gameId) {
         void refresh();
       }
     };
 
-    socket.on('connect', () => socket.emit('game:join', { gameId }));
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
     socket.on('game:updated', refreshRoom);
 
+    socket.connect();
+    join();
+
     return () => {
-      socket.off('connect');
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
       socket.off('game:updated', refreshRoom);
       socket.disconnect();
     };
@@ -170,6 +188,13 @@ export function WaitingRoomPage() {
                 {index === 0 ? 'Anfitrião · entrou primeiro' : 'Jogador'}
               </span>
             </span>
+            <span
+              className={`room__status ${
+                entry.isReady ? 'room__status--ready' : 'room__status--waiting'
+              }`}
+            >
+              {entry.isReady ? '✓ Pronto' : 'Aguardando'}
+            </span>
           </li>
         ))}
 
@@ -198,6 +223,25 @@ export function WaitingRoomPage() {
 
         {isMember && (
           <>
+            {!isReady ? (
+              <button
+                type="button"
+                className="btn btn--success btn--lg"
+                disabled={isBusy}
+                onClick={() => runAction(() => gamesApi.ready(gameId), refresh)}
+              >
+                Estou pronto
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn--ghost btn--lg"
+                disabled
+              >
+                ✓ Você está pronto
+              </button>
+            )}
+
             <button
               type="button"
               className="btn btn--primary btn--lg"
@@ -208,7 +252,9 @@ export function WaitingRoomPage() {
                   ? 'Somente o anfitrião pode iniciar a partida'
                   : players.length < MIN_PLAYERS_TO_START
                     ? `São necessários ${MIN_PLAYERS_TO_START} jogadores`
-                    : undefined
+                    : !allReady
+                      ? 'Todos os jogadores precisam clicar em "Estou pronto"'
+                      : undefined
               }
             >
               Iniciar partida
@@ -249,7 +295,18 @@ export function WaitingRoomPage() {
 
       {isMember && !isHost && (
         <p className="muted room__hint">
-          Só o anfitrião inicia a partida. Assim que ele iniciar, esta tela leva você para a mesa.
+          {isReady
+            ? 'Você já confirmou que está pronto. Aguardando o anfitrião iniciar a partida...'
+            : 'Clique em "Estou pronto" para que o anfitrião possa iniciar a partida.'}
+        </p>
+      )}
+      {isMember && isHost && (
+        <p className="muted room__hint">
+          {players.length < MIN_PLAYERS_TO_START
+            ? `Aguardando a entrada de pelo menos ${MIN_PLAYERS_TO_START} jogadores.`
+            : !allReady
+              ? 'Todos os jogadores precisam confirmar que estão prontos para você poder iniciar.'
+              : 'Todos os jogadores estão prontos! Você já pode iniciar a partida.'}
         </p>
       )}
     </div>

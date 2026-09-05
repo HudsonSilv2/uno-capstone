@@ -15,6 +15,11 @@ const PENDING_COLUMNS: Array<{ table: string; column: string; definition: string
     column: 'saidUno',
     definition: 'BOOLEAN NOT NULL DEFAULT false',
   },
+  {
+    table: 'game_players',
+    column: 'isReady',
+    definition: 'BOOLEAN NOT NULL DEFAULT false',
+  },
 ];
 
 export async function applyPendingColumns(sequelize: Sequelize): Promise<void> {

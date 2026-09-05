@@ -112,7 +112,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
   padding: 10px 14px;
   min-width: 170px;
   background: var(--ink-800);
