@@ -54,4 +54,16 @@ export class ScoreController {
       next(error);
     }
   }
+
+  public async getHistory(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const playerId = req.query.playerId ? parseInt(req.query.playerId as string, 10) : undefined;
+      const gameId = req.query.gameId ? parseInt(req.query.gameId as string, 10) : undefined;
+
+      const history = await scoreService.getScoreHistory({ playerId, gameId });
+      res.json(history);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

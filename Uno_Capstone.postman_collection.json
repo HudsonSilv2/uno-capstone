@@ -409,6 +409,36 @@
 					"response": []
 				},
 				{
+					"name": "Set Player Ready",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/games/1/ready",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"ready"
+							]
+						},
+						"description": "Marks the authenticated player as ready in the lobby. All players must be ready before the game can be started."
+					},
+					"response": []
+				},
+				{
 					"name": "Start Game",
 					"request": {
 						"method": "POST",
@@ -666,6 +696,45 @@
 							]
 						},
 						"description": "Signals UNO for the authenticated player. Accepted only while the game is in progress and the player holds exactly one card. The flag is visible to the other players through the game state (players[].saidUno) and is cleared automatically whenever the hand grows again."
+					},
+					"response": []
+				},
+				{
+					"name": "Challenge UNO",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"targetPlayerId\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/games/1/challenge",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"games",
+								"1",
+								"challenge"
+							]
+						},
+						"description": "Challenges an opponent who holds exactly 1 card and has not declared UNO. Penalizes the target by dealing them 2 cards from the draw deck without advancing the challenger's turn."
 					},
 					"response": []
 				},
@@ -976,6 +1045,106 @@
 							]
 						},
 						"description": "Returns the current score of every player in a game, sorted from lowest to highest."
+					},
+					"response": []
+				},
+				{
+					"name": "SCORE-03 | Get History by Player",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/scores/history?playerId=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scores",
+								"history"
+							],
+							"query": [
+								{
+									"key": "playerId",
+									"value": "1",
+									"description": "ID of the player whose score history you want to retrieve"
+								}
+							]
+						},
+						"description": "Returns score history for a specific player across all finished games. Replace 1 with the real player ID. Only scores from games with status 'finished' are returned, ordered by date descending."
+					},
+					"response": []
+				},
+				{
+					"name": "SCORE-03 | Get History by Game",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/scores/history?gameId=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scores",
+								"history"
+							],
+							"query": [
+								{
+									"key": "gameId",
+									"value": "1",
+									"description": "ID of the finished game whose scores you want to retrieve"
+								}
+							]
+						},
+						"description": "Returns score history for all players in a specific finished game. Replace 1 with the real game ID."
+					},
+					"response": []
+				},
+				{
+					"name": "SCORE-03 | Get History by Player + Game",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/scores/history?playerId=1&gameId=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scores",
+								"history"
+							],
+							"query": [
+								{
+									"key": "playerId",
+									"value": "1"
+								},
+								{
+									"key": "gameId",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Returns score history filtered by both player and game simultaneously. Useful to check a specific player's result in a specific finished game."
+					},
+					"response": []
+				},
+				{
+					"name": "SCORE-03 | Get History - No Filter (expect 400)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/scores/history",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scores",
+								"history"
+							]
+						},
+						"description": "Calls the history endpoint without any query param. Expected response: 400 Bad Request with message 'Provide playerId or gameId to query the score history'."
 					},
 					"response": []
 				}

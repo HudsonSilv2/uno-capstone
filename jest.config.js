@@ -4,6 +4,6 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['<rootDir>/src/**/*.test.ts'],
   clearMocks: true,
-  collectCoverageFrom: ['src/services/**/*.ts'],
+  collectCoverageFrom: ['src/services/**/*.ts', 'src/domain/**/*.ts'],
   coverageDirectory: 'coverage',
 };
